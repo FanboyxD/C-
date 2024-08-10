@@ -1,14 +1,16 @@
-#include <iostream>
-#include <fstream>
-#include <random>
-#include <cstring>
+#include <iostream> 
+#include <fstream>    
+#include <random>     
+#include <cstring>   
 
+// Enumeración para definir tamaños de archivo
 enum FileSize {
-    SMALL,
-    MEDIUM,
-    LARGE
+    SMALL,   
+    MEDIUM,  
+    LARGE    
 };
 
+// Función para obtener el tamaño de archivo basado en una cadena de entrada
 FileSize getSize(const std::string& sizeStr) {
     if (sizeStr == "SMALL") {
         return SMALL;
@@ -21,52 +23,53 @@ FileSize getSize(const std::string& sizeStr) {
     }
 }
 
+// Función para convertir el enum FileSize a bytes
 size_t getFileSizeInBytes(FileSize size) {
     switch (size) {
         case SMALL:
-            return 32 * 1024 * 1024; // 512 MB
+            return 512 * 1024 * 1024ull; // 512 MB
         case MEDIUM:
-            return 1024 * 1024 * 1024; // 1 GB
+            return 1024 * 1024 * 1024ull; // 1 GB
         case LARGE:
-            return 2 * 32 * 1024 * 1024; // 2 GB
+            return 2 * 1024 * 1024 * 1024ull; // 2 GB
         default:
             throw std::invalid_argument("Unknown file size.");
     }
 }
 
+// Función para generar un archivo binario con números aleatorios
 void generateFile(const std::string& outputPath, size_t fileSize) {
-    std::ofstream outFile(outputPath, std::ios::binary);
+    std::ofstream outFile(outputPath, std::ios::binary); // Abre el archivo en modo binario
     if (!outFile) {
         throw std::runtime_error("Failed to open output file.");
     }
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> dist;
+    std::random_device rd;              // Dispositivo para generar semillas aleatorias
+    std::mt19937 gen(rd());             // Generador de números aleatorios Mersenne Twister
+    std::uniform_int_distribution<int> dist; // Distribución uniforme para enteros
 
-    size_t numbersToGenerate = fileSize / sizeof(int);
+    size_t numbersToGenerate = fileSize / sizeof(int); // Calcula cuántos números enteros caben en el archivo
 
     for (size_t i = 0; i < numbersToGenerate; ++i) {
-    int randomNumber = dist(gen);
-    if (i < 10) { // Imprime los primeros 10 números generados para verificar
-        std::cout << "Generated number: " << randomNumber << std::endl;
+        int randomNumber = dist(gen);  // Genera un número aleatorio
+        
+        outFile.write(reinterpret_cast<char*>(&randomNumber), sizeof(randomNumber)); // Escribe el número en el archivo
     }
-    outFile.write(reinterpret_cast<char*>(&randomNumber), sizeof(randomNumber));
+
+    outFile.close(); // Cierra el archivo
 }
 
-
-    outFile.close();
-}
-
+// Función principal para manejar argumentos y ejecutar la generación de archivo
 int main(int argc, char* argv[]) {
     if (argc != 5) {
         std::cerr << "Usage: generator -size <SIZE> -output <OUTPUT FILE PATH>\n";
         return 1;
     }
 
-    std::string sizeArg;
-    std::string outputPath;
+    std::string sizeArg;   // Cadena para almacenar el argumento de tamaño
+    std::string outputPath; // Cadena para almacenar la ruta del archivo de salida
 
+    // Procesa los argumentos de la línea de comandos
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "-size") == 0 && i + 1 < argc) {
             sizeArg = argv[++i];
@@ -76,16 +79,17 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        FileSize size = getSize(sizeArg);
-        size_t fileSize = getFileSizeInBytes(size);
-        generateFile(outputPath, fileSize);
+        FileSize size = getSize(sizeArg); // Obtiene el tamaño del archivo
+        size_t fileSize = getFileSizeInBytes(size); // Convierte el tamaño a bytes
+        generateFile(outputPath, fileSize); // Genera el archivo binario
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << "\n";
+        std::cerr << "Error: " << e.what() << "\n"; // Maneja errores
         return 1;
     }
 
     return 0;
 }
 
-/*.\generator -size SMALL -output "C:\Users\Administrator\Documents\Datos II\output.bin"
+/* Ejemplo de uso:
+   .\generator -size SMALL -output "OUTPUT FILE PATH\numeros.bin"
 */
